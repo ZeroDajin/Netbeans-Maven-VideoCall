@@ -13,6 +13,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.zip.GZIPOutputStream;
 import javax.imageio.ImageIO;
 /**
  *
@@ -26,24 +27,31 @@ public class WebcamDisplayWithUDP {
         this.destinationPort = destinationPort;
         try {
             this.destinationIP = InetAddress.getByName(destinationIP);
-            this.socket = new DatagramSocket();
+            this.socket = new DatagramSocket(6869);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
         public void sendBufferedImageOverUDP(BufferedImage img) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "jpg", baos);
-            baos.flush();
-            byte[] imageData = baos.toByteArray();
-            baos.close();
+    try {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(img, "jpg", baos);
+        baos.flush();
+        byte[] imageData = baos.toByteArray();
+        baos.close();
 
-            DatagramPacket packet = new DatagramPacket(imageData, imageData.length, destinationIP, destinationPort);
-            socket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
+        // Compress the image data
+        ByteArrayOutputStream compressedStream = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzipStream = new GZIPOutputStream(compressedStream)) {
+            gzipStream.write(imageData);
         }
+        byte[] compressedImageData = compressedStream.toByteArray();
+
+        DatagramPacket packet = new DatagramPacket(compressedImageData, compressedImageData.length, destinationIP, destinationPort);
+        socket.send(packet);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
     }
     public BufferedImage receiveBufferedImageOverUDP() {
     byte[] receiveData = new byte[65537];
