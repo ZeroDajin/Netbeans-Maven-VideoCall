@@ -35,48 +35,44 @@ public class WebcamDisplayWithUDP {
             e.printStackTrace();
         }
     }
-    public void sendCompressedBufferedImageOverUDP(BufferedImage img) {
-        try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "jpg", baos);
-            baos.flush();
-            byte[] imageData = baos.toByteArray();
-            baos.close();
+public void sendCompressedBufferedImageOverUDP(BufferedImage img) {
+    try {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(img, "jpg", baos);
+        baos.flush();
+        byte[] imageData = baos.toByteArray();
+        baos.close();
 
-            // Compress the image data
-            ByteArrayOutputStream compressedStream = new ByteArrayOutputStream();
-            try (GZIPOutputStream gzipStream = new GZIPOutputStream(compressedStream)) {
-                gzipStream.write(imageData);
-            }
+        // Compress the image data
+        try (ByteArrayOutputStream compressedStream = new ByteArrayOutputStream();
+             GZIPOutputStream gzipStream = new GZIPOutputStream(compressedStream)) {
+            gzipStream.write(imageData);
+            gzipStream.finish(); // Ensure all data is written
             byte[] compressedImageData = compressedStream.toByteArray();
 
             DatagramPacket packet = new DatagramPacket(compressedImageData, compressedImageData.length, destinationIP, destinationPort);
             socket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
 
-    public BufferedImage receiveCompressedBufferedImageOverUDP() {
-        byte[] receiveData = new byte[65537];
-        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+public BufferedImage receiveCompressedBufferedImageOverUDP() {
+    byte[] receiveData = new byte[65537];
+    DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 
-        try {
-            socket.receive(receivePacket); // Receive the UDP packet
+    try {
+        socket.receive(receivePacket); // Receive the UDP packet
 
-            // Store the received data in the circular buffer
-            circularBuffer[nextIndex] = receivePacket.getData();
-            nextIndex = (nextIndex + 1) % 10; // Update the index for the next packet
-
-            // Decompress the received data
-            ByteArrayInputStream bais = new ByteArrayInputStream(receivePacket.getData());
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            try (GZIPInputStream gzipStream = new GZIPInputStream(bais)) {
-                byte[] buffer = new byte[1024];
-                int len;
-                while ((len = gzipStream.read(buffer)) != -1) {
-                    baos.write(buffer, 0, len);
-                }
+        // Decompress the received data
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(receivePacket.getData());
+             GZIPInputStream gzipStream = new GZIPInputStream(bais);
+             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = gzipStream.read(buffer)) != -1) {
+                baos.write(buffer, 0, len);
             }
             byte[] decompressedData = baos.toByteArray();
 
@@ -84,9 +80,10 @@ public class WebcamDisplayWithUDP {
             ByteArrayInputStream imageStream = new ByteArrayInputStream(decompressedData);
             BufferedImage receivedImage = ImageIO.read(imageStream);
             return receivedImage;
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            return null;
         }
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        return null;
     }
+}
 }
