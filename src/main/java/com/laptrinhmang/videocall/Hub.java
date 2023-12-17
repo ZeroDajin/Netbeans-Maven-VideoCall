@@ -55,9 +55,9 @@ public class Hub extends javax.swing.JFrame {
                 Frame frame = grabber.grabFrame();
                 if (frame != null) {
                     BufferedImage img = convertToBufferedImage(frame);
-                    webcamDisplay.sendBufferedImageOverUDP(img);
+                    webcamDisplay.sendCompressedBufferedImageOverUDP(img);
                     
-                    BufferedImage receivedImg = webcamDisplay.receiveBufferedImageOverUDP();
+                    BufferedImage receivedImg = webcamDisplay.receiveCompressedBufferedImageOverUDP();
                     drawOnCanvas(img);
                     drawOnReceiveCanvas(receivedImg);
                 }
