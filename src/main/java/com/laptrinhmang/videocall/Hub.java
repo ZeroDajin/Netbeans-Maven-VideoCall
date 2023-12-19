@@ -48,24 +48,6 @@ public class Hub extends javax.swing.JFrame {
         Graphics g = UserReceiveVideoCapture.getGraphics();
         g.drawImage(img, 0, 0, UserReceiveVideoCapture);
     }
-    private void startVideoCapture() {
-        new Thread(() -> {
-            while (IsCalling) {
-            try {
-                Frame frame = grabber.grabFrame();
-                if (frame != null) {
-                    BufferedImage img = convertToBufferedImage(frame);
-                    webcamDisplay.sendCompressedBufferedImageOverUDP(img);
-                    BufferedImage receivedImg = webcamDisplay.receiveCompressedBufferedImageOverUDP();
-                    drawOnCanvas(img);
-                    drawOnReceiveCanvas(receivedImg);
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-    }).start();
-    }
     private void startVideoCaptureWithTwoThreads(){
     new Thread(() -> {
         while (IsCalling) {
