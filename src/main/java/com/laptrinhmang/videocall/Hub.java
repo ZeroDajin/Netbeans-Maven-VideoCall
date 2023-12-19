@@ -28,7 +28,7 @@ public class Hub extends javax.swing.JFrame {
      */
     public Hub() {
         initComponents();
-        webcamDisplay = new WebcamDisplayWithUDP("192.168.1.6", 6869);
+        webcamDisplay = new WebcamDisplayWithUDP("25.58.17.239", 6869);
     }
     private BufferedImage convertToBufferedImage(Frame frame) {
         int width = frame.imageWidth;
@@ -48,24 +48,32 @@ public class Hub extends javax.swing.JFrame {
         Graphics g = UserReceiveVideoCapture.getGraphics();
         g.drawImage(img, 0, 0, UserReceiveVideoCapture);
     }
-    private void startVideoCapture() {
-        new Thread(() -> {
-            while (IsCalling) {
+    private void startVideoCaptureWithTwoThreads(){
+    new Thread(() -> {
+        while (IsCalling) {
             try {
                 Frame frame = grabber.grabFrame();
                 if (frame != null) {
                     BufferedImage img = convertToBufferedImage(frame);
-                    webcamDisplay.sendBufferedImageOverUDP(img);
-                    BufferedImage receivedImg = webcamDisplay.receiveBufferedImageOverUDP();
+                    webcamDisplay.sendCompressedBufferedImageOverUDP(img);
                     drawOnCanvas(img);
-                    drawOnReceiveCanvas(receivedImg);
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }).start();
-}
+    new Thread(() -> {
+        while (IsCalling) {
+            try {
+                BufferedImage receivedImg = webcamDisplay.receiveCompressedBufferedImageOverUDP();
+                drawOnReceiveCanvas(receivedImg);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }).start();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -102,33 +110,34 @@ public class Hub extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(376, 376, 376))
+                .addComponent(UserVideoCapture, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(22, 22, 22)
+                .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 640, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(103, 103, 103)
+                .addGap(223, 223, 223)
                 .addComponent(Connect)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(Disconnect)
-                .addGap(179, 179, 179))
-            .addGroup(layout.createSequentialGroup()
-                .addGap(61, 61, 61)
-                .addComponent(UserVideoCapture, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addGap(246, 246, 246))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(46, 46, 46)
-                .addComponent(UserVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(46, 46, 46)
-                .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(212, 212, 212)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(Connect)
-                    .addComponent(Disconnect))
-                .addContainerGap(109, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(UserVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(51, 51, 51)
+                        .addComponent(Connect))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(35, 35, 35)
+                        .addComponent(Disconnect)))
+                .addGap(0, 42, Short.MAX_VALUE))
         );
+
+        UserVideoCapture.getAccessibleContext().setAccessibleDescription("");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -138,7 +147,7 @@ public class Hub extends javax.swing.JFrame {
         grabber = new OpenCVFrameGrabber(0);
         try {
             grabber.start();
-            startVideoCapture();
+            startVideoCaptureWithTwoThreads();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
