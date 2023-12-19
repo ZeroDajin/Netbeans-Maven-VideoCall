@@ -65,7 +65,33 @@ public class Hub extends javax.swing.JFrame {
             }
         }
     }).start();
-}
+    }
+    private void startVideoCaptureWithTwoThreads(){
+    new Thread(() -> {
+        while (IsCalling) {
+            try {
+                Frame frame = grabber.grabFrame();
+                if (frame != null) {
+                    BufferedImage img = convertToBufferedImage(frame);
+                    webcamDisplay.sendCompressedBufferedImageOverUDP(img);
+                    drawOnCanvas(img);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }).start();
+    new Thread(() -> {
+        while (IsCalling) {
+            try {
+                BufferedImage receivedImg = webcamDisplay.receiveCompressedBufferedImageOverUDP();
+                drawOnReceiveCanvas(receivedImg);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+    }).start();
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -139,7 +165,7 @@ public class Hub extends javax.swing.JFrame {
         grabber = new OpenCVFrameGrabber(0);
         try {
             grabber.start();
-            startVideoCapture();
+            startVideoCaptureWithTwoThreads();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

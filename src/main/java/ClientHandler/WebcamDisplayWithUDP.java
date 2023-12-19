@@ -58,10 +58,9 @@ public void sendCompressedBufferedImageOverUDP(BufferedImage img) {
     }
 }
 
-public BufferedImage receiveCompressedBufferedImageOverUDP() {
+    public BufferedImage receiveCompressedBufferedImageOverUDP() {
     byte[] receiveData = new byte[65537];
     DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-
     try {
         socket.receive(receivePacket); // Receive the UDP packet
 
@@ -69,12 +68,16 @@ public BufferedImage receiveCompressedBufferedImageOverUDP() {
         try (ByteArrayInputStream bais = new ByteArrayInputStream(receivePacket.getData());
              GZIPInputStream gzipStream = new GZIPInputStream(bais);
              ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             int len;
             while ((len = gzipStream.read(buffer)) != -1) {
                 baos.write(buffer, 0, len);
             }
             byte[] decompressedData = baos.toByteArray();
+
+            // Store the decompressed data in the circular buffer
+            circularBuffer[nextIndex] = decompressedData;
+            nextIndex = (nextIndex + 1) % circularBuffer.length; // Update the index for the next frame
 
             // Convert the decompressed data to a BufferedImage
             ByteArrayInputStream imageStream = new ByteArrayInputStream(decompressedData);
