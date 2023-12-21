@@ -171,15 +171,16 @@ public class Hub extends javax.swing.JFrame {
 
     private void ConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConnectActionPerformed
         IsCalling = true;
-        startVoiceChat();
-//        grabber = new OpenCVFrameGrabber(0);
-//        try {
-//            grabber.start();
-//            startVideoCaptureWithTwoThreads();
-//            
-//        } catch (Exception ex) {
-//            ex.printStackTrace();
-//        }
+        
+        grabber = new OpenCVFrameGrabber(0);
+        try {
+            startVoiceChat();
+            grabber.start();
+            startVideoCaptureWithTwoThreads();
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }//GEN-LAST:event_ConnectActionPerformed
 
     private void DisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DisconnectActionPerformed

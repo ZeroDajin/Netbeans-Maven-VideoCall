@@ -39,7 +39,7 @@ public class MyTargetDataLine {
     }
 
     private AudioFormat getAudioFormat() {
-        float sampleRate = 44100.0F;
+        float sampleRate = 48000.0F;
         int sampleSizeInBits = 16;
         int channels = 1;
         boolean signed = true;
@@ -58,7 +58,7 @@ public class MyTargetDataLine {
     sourceDataLine.start();
 
     new Thread(() -> {
-        byte[] buffer = new byte[2048];
+        byte[] buffer = new byte[8192];
         int bytesRead;
 
         while (true) {
@@ -68,7 +68,7 @@ public class MyTargetDataLine {
     }).start();
 
     new Thread(() -> {
-        byte[] receiveBuffer = new byte[2048];
+        byte[] receiveBuffer = new byte[8192];
         DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 
         while (true) {
