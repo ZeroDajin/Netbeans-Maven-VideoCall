@@ -31,7 +31,7 @@ public class Hub extends javax.swing.JFrame {
     public Hub() {
         initComponents();
         webcamDisplay = new WebcamDisplayWithUDP("25.58.17.239", 6869);
-        audioCapture = new MyTargetDataLine("10.11.14.54", 6870);
+        audioCapture = new MyTargetDataLine("25.58.14.2", 6870);
     }
     private BufferedImage convertToBufferedImage(Frame frame) {
         int width = frame.imageWidth;

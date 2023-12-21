@@ -72,16 +72,25 @@ public class MyTargetDataLine {
         DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
 
         while (true) {
-            try {
-                socket.receive(receivePacket);
-                int bytesRead = receivePacket.getLength();
-                if (bytesRead > 0) {
-                    sourceDataLine.write(receiveBuffer, 0, bytesRead);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
+    try {
+        socket.receive(receivePacket);
+        int bytesRead = receivePacket.getLength();
+        if (bytesRead > 0) {
+            // Adjust the volume of each received audio sample
+            float volume = 2.0f; // You can adjust this value to control the volume
+            for (int i = 0; i < bytesRead; i += 2) {
+                short sample = (short) ((receiveBuffer[i + 1] << 8) | (receiveBuffer[i] & 0xFF));
+                sample = (short) (sample * volume);
+                receiveBuffer[i] = (byte) sample;
+                receiveBuffer[i + 1] = (byte) (sample >> 8);
             }
+
+            sourceDataLine.write(receiveBuffer, 0, bytesRead);
         }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+}
     }).start();
 }
 
@@ -96,13 +105,22 @@ public class MyTargetDataLine {
         sourceDataLine.close();
     }
     private void sendAudioData(byte[] data, int length) {
-        try {
-            DatagramPacket packet = new DatagramPacket(data, length, destinationIP, destinationPort);
-            socket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
+    try {
+        // Adjust the volume by multiplying each audio sample by a volume factor
+        float volume = 2.0f; // You can adjust this value to control the volume
+        for (int i = 0; i < length; i += 2) {
+            short sample = (short) ((data[i + 1] << 8) | (data[i] & 0xFF));
+            sample = (short) (sample * volume);
+            data[i] = (byte) sample;
+            data[i + 1] = (byte) (sample >> 8);
         }
+
+        DatagramPacket packet = new DatagramPacket(data, length, destinationIP, destinationPort);
+        socket.send(packet);
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
 
     
 }
