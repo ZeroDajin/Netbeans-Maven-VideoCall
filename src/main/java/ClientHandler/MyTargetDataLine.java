@@ -1,5 +1,6 @@
 package ClientHandler;
 
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import javax.sound.sampled.*;
@@ -52,24 +53,38 @@ public class MyTargetDataLine {
     }
 
     public void startCaptureAndPlayback() {
-        // Start capturing audio
-        targetDataLine.start();
+    // Start capturing audio
+    targetDataLine.start();
+    sourceDataLine.start();
 
-        // Start playback
-        sourceDataLine.start();
-
+    new Thread(() -> {
         byte[] buffer = new byte[2048];
         int bytesRead;
 
-        // Continuously read from the targetDataLine and write to the sourceDataLine
         while (true) {
             bytesRead = targetDataLine.read(buffer, 0, buffer.length);
-            if (bytesRead > 0) {
-                // Write to the sourceDataLine for playback
-                sourceDataLine.write(buffer, 0, bytesRead);
+            sendAudioData(buffer, bytesRead);
+        }
+    }).start();
+
+    new Thread(() -> {
+        byte[] receiveBuffer = new byte[2048];
+        DatagramPacket receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
+
+        while (true) {
+            try {
+                socket.receive(receivePacket);
+                int bytesRead = receivePacket.getLength();
+                if (bytesRead > 0) {
+                    sourceDataLine.write(receiveBuffer, 0, bytesRead);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
-    }
+    }).start();
+}
+
 
     public void stopCaptureAndPlayback() {
         // Stop capturing audio
@@ -79,6 +94,14 @@ public class MyTargetDataLine {
         // Stop playback
         sourceDataLine.stop();
         sourceDataLine.close();
+    }
+    private void sendAudioData(byte[] data, int length) {
+        try {
+            DatagramPacket packet = new DatagramPacket(data, length, destinationIP, destinationPort);
+            socket.send(packet);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     
