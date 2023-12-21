@@ -31,7 +31,7 @@ public class Hub extends javax.swing.JFrame {
     public Hub() {
         initComponents();
         webcamDisplay = new WebcamDisplayWithUDP("25.58.17.239", 6869);
-        audioCapture = new MyTargetDataLine();
+        audioCapture = new MyTargetDataLine("25.58.17.239", 6870);
     }
     private BufferedImage convertToBufferedImage(Frame frame) {
         int width = frame.imageWidth;
@@ -81,17 +81,13 @@ public class Hub extends javax.swing.JFrame {
         new Thread(() -> {
             try {
                 // Start capturing and playing audio
-                audioCapture.startCapture();
+                audioCapture.startCaptureAndPlayback();
 
                 byte[] audioData = new byte[1024];
 
-                while (IsCalling) {
-                    // Read and play audio data
-                    audioCapture.read(audioData, 0, audioData.length);
+                if(IsCalling==false){
+                    audioCapture.stopCaptureAndPlayback();
                 }
-
-                // Stop capturing and playing audio
-                audioCapture.stopCapture();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -169,14 +165,15 @@ public class Hub extends javax.swing.JFrame {
 
     private void ConnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConnectActionPerformed
         IsCalling = true;
-        grabber = new OpenCVFrameGrabber(0);
-        try {
-            grabber.start();
-            startVideoCaptureWithTwoThreads();
-            startVoiceChat();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+        startVoiceChat();
+//        grabber = new OpenCVFrameGrabber(0);
+//        try {
+//            grabber.start();
+//            startVideoCaptureWithTwoThreads();
+//            
+//        } catch (Exception ex) {
+//            ex.printStackTrace();
+//        }
     }//GEN-LAST:event_ConnectActionPerformed
 
     private void DisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DisconnectActionPerformed
