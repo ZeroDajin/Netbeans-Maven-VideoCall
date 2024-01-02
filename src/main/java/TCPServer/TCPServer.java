@@ -14,32 +14,33 @@ import java.util.ArrayList;
  *
  * @author unkno
  */
-public class TCPServer implements Runnable{
+public class TCPServer implements Runnable {
     private List<User> userList;
+    private List<Socket> clientSockets;
     private ServerSocket serverSocket;
-    
-    public TCPServer(List<User> userList){
+
+    public TCPServer(List<User> userList) {
         this.userList = userList;
+        this.clientSockets = new ArrayList<>();
     }
+
     @Override
-    public void run(){
+    public void run() {
         try {
-            serverSocket = new ServerSocket(5000); 
-            System.out.println("Server is listening....");
+            serverSocket = new ServerSocket(5000);
+            System.out.println("Server is running...");
+
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                Thread lobbyHandler = new Thread(new LobbyHandler(clientSocket, userList));
-                lobbyHandler.start();
-                System.out.println("Getting new User....");
+                clientSockets.add(clientSocket);
+                LobbyHandler lobbyHandler = new LobbyHandler(clientSocket, userList, clientSockets);
+                Thread handlerThread = new Thread(lobbyHandler);
+                handlerThread.start();
+                System.out.println("New user connected.");
             }
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public static void main(String[] args){
-        List<User> userList = new ArrayList<>();  // Create a list to hold users
-        TCPServer tcpServer = new TCPServer(userList);  // Create an instance of TCPServer
-        Thread serverThread = new Thread(tcpServer);  // Create a new thread for the server
-        serverThread.start();
-    }
 }
+

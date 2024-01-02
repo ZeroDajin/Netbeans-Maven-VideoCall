@@ -128,6 +128,7 @@ public class Lobby extends javax.swing.JFrame {
             objectOutputStream.writeObject("disconnect");
             // Close the client socket
             clientSocket.close();
+            BGiaNhap.setVisible(true);
             // Perform any other necessary cleanup or UI updates
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -143,11 +144,8 @@ public class Lobby extends javax.swing.JFrame {
             
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             objectOutputStream.writeObject(new User(userName, InetAddress.getLocalHost(), 6869));
-            
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
             List<User> userList = (List<User>) objectInputStream.readObject();
-
-            
             DefaultListModel<String> listModel = new DefaultListModel<>();
             for (User user : userList) {
                 listModel.addElement(user.Name);
@@ -159,13 +157,7 @@ public class Lobby extends javax.swing.JFrame {
                 comboBoxModel.addElement(user.Name);
             }
             CBUser.setModel(comboBoxModel);
-
-            // Start a new thread to listen for any changes to the UserList and update the JList and ComboBox
-            Thread userListUpdaterThread = new Thread(new UserListUpdater(clientSocket, userList, listModel, comboBoxModel));
-            userListUpdaterThread.start();
-
-            // Perform any other necessary operations after connecting to the server
-            // For example, you can display a success message to the user
+            
         } catch (IOException | ClassNotFoundException ex) {
             ex.printStackTrace();
             // Handle any exceptions or display an error message to the user
