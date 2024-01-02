@@ -42,5 +42,13 @@ public class TCPServer implements Runnable {
             e.printStackTrace();
         }
     }
+
+    public static void main(String[] args) {
+        List<User> userList = new ArrayList<>();  // Create a list to store users
+        TCPServer server = new TCPServer(userList);  // Create an instance of the server
+        Thread serverThread = new Thread(server);  // Create a thread for the server
+        serverThread.start();  // Start the server
+        System.out.println("Server started.");
+    }
 }
 

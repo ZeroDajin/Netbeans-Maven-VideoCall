@@ -139,27 +139,18 @@ public class Lobby extends javax.swing.JFrame {
     private void BGiaNhapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BGiaNhapActionPerformed
         String userName = txtTenTaiKhoan.getText();
         BGiaNhap.setVisible(false);
-        try {
-            Socket clientSocket = new Socket("172.26.4.72", 5000); 
-            
+                try {
+            Socket clientSocket = new Socket("172.26.4.72", 5000);  // Connect to the server
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            objectOutputStream.writeObject(new User(userName, InetAddress.getLocalHost(), 6869));
+            objectOutputStream.writeObject(new User(userName, InetAddress.getLocalHost(), 6869));  // Send user information
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
-            List<User> userList = (List<User>) objectInputStream.readObject();
-            DefaultListModel<String> listModel = new DefaultListModel<>();
-            for (User user : userList) {
-                listModel.addElement(user.Name);
-            }
-            ListUser.setModel(listModel);
-
-            DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
-            for (User user : userList) {
-                comboBoxModel.addElement(user.Name);
-            }
-            CBUser.setModel(comboBoxModel);
+            List<User> userList = (List<User>) objectInputStream.readObject();  // Receive the updated user list
+            UserListUpdater userListUpdater = new UserListUpdater(clientSocket, userList, ListUser, CBUser);
+            Thread updaterThread = new Thread(userListUpdater);
+            updaterThread.start();
             
-        } catch (IOException | ClassNotFoundException ex) {
-            ex.printStackTrace();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
             // Handle any exceptions or display an error message to the user
         }
     }//GEN-LAST:event_BGiaNhapActionPerformed

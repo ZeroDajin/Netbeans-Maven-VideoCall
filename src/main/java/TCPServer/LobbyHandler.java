@@ -74,12 +74,10 @@ public class LobbyHandler implements Runnable {
         for (Socket socket : clientSockets) {
             try {
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-                synchronized (userList) {
-                    objectOutputStream.writeObject(new ArrayList<>(userList)); // Send a copy of the user list
-                }
+                objectOutputStream.writeObject(new ArrayList<>(userList)); // Send a copy of the updated user list
             } catch (IOException e) {
                 e.printStackTrace();
-                // Handle any exceptions or implement error handling as needed
+                // Handle any exceptions or display an error message to the server log
             }
         }
     }

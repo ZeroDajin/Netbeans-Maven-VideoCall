@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
+import javax.swing.JComboBox;
+import javax.swing.JList;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -19,15 +22,15 @@ import javax.swing.DefaultListModel;
 public class UserListUpdater implements Runnable {
     private Socket clientSocket;
     private List<User> userList;
-    private DefaultListModel<String> listModel;
-    private DefaultComboBoxModel<String> comboBoxModel;
+    private JList<String> listUser;
+    private JComboBox<String> comboBox;
     private List<User> lastUserList; // Keep track of the last received UserList
 
-    public UserListUpdater(Socket clientSocket, List<User> userList, DefaultListModel<String> listModel, DefaultComboBoxModel<String> comboBoxModel) {
+    public UserListUpdater(Socket clientSocket, List<User> userList, JList<String> listUser, JComboBox<String> comboBox) {
         this.clientSocket = clientSocket;
         this.userList = userList;
-        this.listModel = listModel;
-        this.comboBoxModel = comboBoxModel;
+        this.listUser = listUser;
+        this.comboBox = comboBox;
         this.lastUserList = new ArrayList<>(userList); // Initialize lastUserList with the initial UserList
     }
 
@@ -46,16 +49,22 @@ public class UserListUpdater implements Runnable {
                     userList.addAll(updatedUserList);
 
                     // Update the JList with the updated user names
-                    listModel.clear();
-                    for (User user : userList) {
-                        listModel.addElement(user.Name);
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        DefaultListModel<String> model = new DefaultListModel<>();
+                        for (User user : userList) {
+                            model.addElement(user.Name);
+                        }
+                        listUser.setModel(model);
+                    });
 
                     // Update the ComboBox with the updated user names
-                    comboBoxModel.removeAllElements();
-                    for (User user : userList) {
-                        comboBoxModel.addElement(user.Name);
-                    }
+                    SwingUtilities.invokeLater(() -> {
+                        DefaultComboBoxModel<String> comboBoxModel = new DefaultComboBoxModel<>();
+                        for (User user : userList) {
+                            comboBoxModel.addElement(user.Name);
+                        }
+                        comboBox.setModel(comboBoxModel);
+                    });
 
                     // Update lastUserList with the current UserList
                     lastUserList.clear();
