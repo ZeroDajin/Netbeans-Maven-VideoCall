@@ -25,13 +25,15 @@ public class VideoCall extends javax.swing.JFrame {
     private boolean IsCalling = false;
     private WebcamDisplayWithUDP webcamDisplay;
     private MyTargetDataLine audioCapture;
+    private static String UserIP = "127.0.0.1";
     /**
      * Creates new form Hub
      */
-    public VideoCall() {
+    public VideoCall(String UserIP) {
         initComponents();
-        webcamDisplay = new WebcamDisplayWithUDP("25.58.14.2", 6869);
-        audioCapture = new MyTargetDataLine("25.58.14.2", 6870);
+        this.UserIP = UserIP;
+        webcamDisplay = new WebcamDisplayWithUDP(this.UserIP, 6869);
+        audioCapture = new MyTargetDataLine(this.UserIP, 6870);
     }
     private BufferedImage convertToBufferedImage(Frame frame) {
         int width = frame.imageWidth;
@@ -223,7 +225,7 @@ public class VideoCall extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new VideoCall().setVisible(true);
+                new VideoCall(UserIP).setVisible(true);
             }
         });
     }

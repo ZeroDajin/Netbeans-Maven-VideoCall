@@ -20,10 +20,12 @@ import javax.swing.SwingUtilities;
  * @author unkno
  */
 public class UserListUpdater implements Runnable {
+
     private Socket clientSocket;
     private List<User> userList;
     private JList<String> listUser;
     private JComboBox<String> comboBox;
+    private boolean running;
     private List<User> lastUserList; // Keep track of the last received UserList
 
     public UserListUpdater(Socket clientSocket, List<User> userList, JList<String> listUser, JComboBox<String> comboBox) {
@@ -31,13 +33,17 @@ public class UserListUpdater implements Runnable {
         this.userList = userList;
         this.listUser = listUser;
         this.comboBox = comboBox;
+        this.running = true;
         this.lastUserList = new ArrayList<>(userList); // Initialize lastUserList with the initial UserList
+    }
+        public void stop() {
+        this.running = false;
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
+            while (running) {
                 // Receive the updated UserList from the server
                 ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
                 List<User> updatedUserList = (List<User>) objectInputStream.readObject();
@@ -76,5 +82,7 @@ public class UserListUpdater implements Runnable {
             // Handle any exceptions or implement error handling as needed
         }
     }
+    public List<User> getUserList(){
+        return userList;
+    }
 }
-

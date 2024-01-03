@@ -4,6 +4,7 @@
  */
 package com.laptrinhmang.videocall;
 
+import HubHandler.DisconnectMessage;
 import HubHandler.User;
 import HubHandler.UserListUpdater;
 import java.io.IOException;
@@ -14,14 +15,17 @@ import java.net.Socket;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.DefaultListModel;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author unkno
  */
 public class Lobby extends javax.swing.JFrame {
-
+    
     private Socket clientSocket;
+    private UserListUpdater userListUpdater;
+
     /**
      * Creates new form Lobby
      */
@@ -29,7 +33,12 @@ public class Lobby extends javax.swing.JFrame {
         
         initComponents();
         this.setTitle("Lobby");
+        BThoat.setVisible(false);
         
+    }
+    
+    public void setClientSocket(Socket clientSocket) {
+        this.clientSocket = clientSocket;
     }
 
     /**
@@ -48,7 +57,6 @@ public class Lobby extends javax.swing.JFrame {
         ListUser = new javax.swing.JList<>();
         CBUser = new javax.swing.JComboBox<>();
         BGoi = new javax.swing.JButton();
-        BCapNhat = new javax.swing.JButton();
         BThoat = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -65,8 +73,11 @@ public class Lobby extends javax.swing.JFrame {
         jScrollPane1.setViewportView(ListUser);
 
         BGoi.setText("Gọi");
-
-        BCapNhat.setText("Cập nhật");
+        BGoi.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                BGoiActionPerformed(evt);
+            }
+        });
 
         BThoat.setText("Thoát");
         BThoat.addActionListener(new java.awt.event.ActionListener() {
@@ -92,9 +103,7 @@ public class Lobby extends javax.swing.JFrame {
                     .addComponent(CBUser, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(BCapNhat, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(BGoi, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(BGoi, javax.swing.GroupLayout.PREFERRED_SIZE, 77, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(BThoat))
                 .addContainerGap(177, Short.MAX_VALUE))
         );
@@ -112,9 +121,7 @@ public class Lobby extends javax.swing.JFrame {
                     .addComponent(CBUser, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(BGoi))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(BCapNhat))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 223, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(53, Short.MAX_VALUE))
         );
 
@@ -125,10 +132,12 @@ public class Lobby extends javax.swing.JFrame {
         try {
             // Create an output stream to send the disconnect message to the server
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
-            objectOutputStream.writeObject("disconnect");
+            objectOutputStream.writeObject(new DisconnectMessage(InetAddress.getLocalHost())); // Send a specific disconnection message object
             // Close the client socket
+            userListUpdater.stop();
             clientSocket.close();
             BGiaNhap.setVisible(true);
+            BThoat.setVisible(false);
             // Perform any other necessary cleanup or UI updates
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -138,22 +147,45 @@ public class Lobby extends javax.swing.JFrame {
 
     private void BGiaNhapActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BGiaNhapActionPerformed
         String userName = txtTenTaiKhoan.getText();
-        BGiaNhap.setVisible(false);
-                try {
-            Socket clientSocket = new Socket("172.26.4.72", 5000);  // Connect to the server
+        
+        try {
+            clientSocket = new Socket("172.26.4.72", 5000);  // Initialize the class-level clientSocket
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
             objectOutputStream.writeObject(new User(userName, InetAddress.getLocalHost(), 6869));  // Send user information
             ObjectInputStream objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
             List<User> userList = (List<User>) objectInputStream.readObject();  // Receive the updated user list
-            UserListUpdater userListUpdater = new UserListUpdater(clientSocket, userList, ListUser, CBUser);
+            userListUpdater = new UserListUpdater(clientSocket, userList, ListUser, CBUser);
             Thread updaterThread = new Thread(userListUpdater);
             updaterThread.start();
-            
+            BGiaNhap.setVisible(false);
+            BThoat.setVisible(true);
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
             // Handle any exceptions or display an error message to the user
         }
     }//GEN-LAST:event_BGiaNhapActionPerformed
+
+    private void BGoiActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BGoiActionPerformed
+        List<User> userList = userListUpdater.getUserList();
+        String selectedUsername = (String) CBUser.getSelectedItem();
+        String selectedUserIP = "";
+        if (selectedUsername != null) {
+            for (User user : userList) {
+                if (user.Name.equals(selectedUsername)) {
+                    InetAddress userIP = user.UserIP;
+                    selectedUserIP = userIP.getHostAddress();
+                    break;
+                }
+            }
+            VideoCall calling = new VideoCall(selectedUserIP);
+            calling.setVisible(true);
+        }
+        else{
+            JOptionPane.showMessageDialog(null,"Error Can't Get username");
+        }
+        
+
+    }//GEN-LAST:event_BGoiActionPerformed
 
     /**
      * @param args the command line arguments
@@ -191,7 +223,6 @@ public class Lobby extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton BCapNhat;
     private javax.swing.JButton BGiaNhap;
     private javax.swing.JButton BGoi;
     private javax.swing.JButton BThoat;

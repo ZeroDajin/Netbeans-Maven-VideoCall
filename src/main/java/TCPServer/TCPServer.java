@@ -10,11 +10,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.List;
 import java.util.ArrayList;
+
 /**
  *
  * @author unkno
  */
 public class TCPServer implements Runnable {
+
     private List<User> userList;
     private List<Socket> clientSockets;
     private ServerSocket serverSocket;
@@ -51,4 +53,3 @@ public class TCPServer implements Runnable {
         System.out.println("Server started.");
     }
 }
-
