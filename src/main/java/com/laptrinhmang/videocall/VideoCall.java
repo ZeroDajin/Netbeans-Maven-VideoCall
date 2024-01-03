@@ -10,9 +10,13 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.OpenCVFrameGrabber;
 import org.bytedeco.opencv.opencv_core.Mat;
 
@@ -29,7 +33,7 @@ public class VideoCall extends javax.swing.JFrame {
     /**
      * Creates new form Hub
      */
-    public VideoCall(String UserIP) {
+    public VideoCall(String UserIP) throws UnknownHostException {
         initComponents();
         this.UserIP = UserIP;
         webcamDisplay = new WebcamDisplayWithUDP(this.UserIP, 6869);
@@ -80,28 +84,32 @@ public class VideoCall extends javax.swing.JFrame {
     }).start();
     }
     private void startVoiceChat() {
-        new Thread(() -> {
-            try {
-                // Start capturing and playing audio
-                audioCapture.startCaptureAndPlayback();
+    new Thread(() -> {
+        try {
+            // Start capturing and playing audio
+            audioCapture.startCaptureAndPlayback();
 
-                byte[] audioData = new byte[1024];
-
-                while (IsCalling) {
+            while (IsCalling) {
                 // Your audio processing logic here
 
-                // For example, if you want to stop the voice chat when IsCalling is false
-                if (!IsCalling) {
-                    System.out.println("Voice chat stopped.");
-                    audioCapture.stopCaptureAndPlayback();
+                // For example, check if IsCalling is still true and sleep for a short duration
+                // This loop is where you process audio while the call is ongoing
+
+                try {
+                    Thread.sleep(5); // You can adjust this duration
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
+            // Voice chat stopped, so stop capturing and playing audio
+            System.out.println("Voice chat stopped.");
+            audioCapture.stopCaptureAndPlayback();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }).start();
+}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -117,6 +125,7 @@ public class VideoCall extends javax.swing.JFrame {
         Disconnect = new javax.swing.JButton();
         UserReceiveVideoCapture = new java.awt.Canvas();
         UserVideoCapture = new java.awt.Canvas();
+        turnmyvolume = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -134,6 +143,13 @@ public class VideoCall extends javax.swing.JFrame {
             }
         });
 
+        turnmyvolume.setText("tắt âm");
+        turnmyvolume.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                turnmyvolumeActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -144,9 +160,11 @@ public class VideoCall extends javax.swing.JFrame {
                 .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 640, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(223, 223, 223)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(turnmyvolume)
+                .addGap(42, 42, 42)
                 .addComponent(Connect)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(36, 36, 36)
                 .addComponent(Disconnect)
                 .addGap(246, 246, 246))
         );
@@ -156,14 +174,12 @@ public class VideoCall extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(UserVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(UserReceiveVideoCapture, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(51, 51, 51)
-                        .addComponent(Connect))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(35, 35, 35)
-                        .addComponent(Disconnect)))
-                .addGap(0, 42, Short.MAX_VALUE))
+                .addGap(35, 35, 35)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(Disconnect)
+                    .addComponent(Connect)
+                    .addComponent(turnmyvolume))
+                .addGap(0, 58, Short.MAX_VALUE))
         );
 
         UserVideoCapture.getAccessibleContext().setAccessibleDescription("");
@@ -175,7 +191,10 @@ public class VideoCall extends javax.swing.JFrame {
         IsCalling = true;
         
         grabber = new OpenCVFrameGrabber(0);
+        grabber.setImageMode(FrameGrabber.ImageMode.COLOR); // Set the image mode
+        grabber.setFormat("javafx");
         try {
+           
             startVoiceChat();
             grabber.start();
             startVideoCaptureWithTwoThreads();
@@ -188,11 +207,19 @@ public class VideoCall extends javax.swing.JFrame {
     private void DisconnectActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DisconnectActionPerformed
         IsCalling = false;
         try{
+            audioCapture.stopCaptureAndPlayback();
             grabber.stop();
+             audioCapture.reconnect();
+             
         }catch(Exception ex){
             ex.printStackTrace();
         }
     }//GEN-LAST:event_DisconnectActionPerformed
+
+    private void turnmyvolumeActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_turnmyvolumeActionPerformed
+        // TODO add your handling code here:
+        
+    }//GEN-LAST:event_turnmyvolumeActionPerformed
 
     /**
      * @param args the command line arguments
@@ -225,7 +252,11 @@ public class VideoCall extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new VideoCall(UserIP).setVisible(true);
+                try {
+                    new VideoCall(UserIP).setVisible(true);
+                } catch (UnknownHostException ex) {
+                    Logger.getLogger(VideoCall.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
@@ -235,5 +266,6 @@ public class VideoCall extends javax.swing.JFrame {
     private javax.swing.JButton Disconnect;
     private java.awt.Canvas UserReceiveVideoCapture;
     private java.awt.Canvas UserVideoCapture;
+    private javax.swing.JButton turnmyvolume;
     // End of variables declaration//GEN-END:variables
 }
